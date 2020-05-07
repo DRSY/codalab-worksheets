@@ -196,7 +196,8 @@ class Worker:
                 traceback.print_exc()
                 # Sleep for a long time so we don't keep on failing.
                 logger.error('Sleeping for 1 hour due to exception...please help me!')
-                time.sleep(1 * 60 * 60)
+                # TODO: change it back to 60 * 60 -tony
+                time.sleep(1 * 60)
         self.cleanup()
 
     def terminate_containers(self):
@@ -436,6 +437,7 @@ class Worker:
         now = time.time()
         start_message = {'hostname': socket.gethostname(), 'start_time': int(now)}
 
+        # TODO: investigate here -tony
         if self.bundle_service.start_bundle(self.id, bundle['uuid'], start_message):
             bundle = BundleInfo.from_dict(bundle)
             resources = RunResources.from_dict(resources)

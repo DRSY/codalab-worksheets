@@ -60,6 +60,11 @@ class DependencyManager(StateTransitioner, BaseDependencyManager):
         self._bundle_service = bundle_service
         self._max_cache_size_bytes = max_cache_size_bytes
         self.dependencies_dir = os.path.join(worker_dir, DependencyManager.DEPENDENCIES_DIR_NAME)
+
+        # TODO: delete later -tony
+        logger.info(
+            'Tony - dependency_manager: init dependencies dir: {}'.format(self.dependencies_dir)
+        )
         if not os.path.exists(self.dependencies_dir):
             logger.info('{} doesn\'t exist, creating.'.format(self.dependencies_dir))
             os.makedirs(self.dependencies_dir, 0o770)
@@ -424,6 +429,7 @@ class DependencyManager(StateTransitioner, BaseDependencyManager):
                         % size_str(bytes_downloaded),
                     )
 
+            # TODO: investigate here -tony
             dependency_path = os.path.join(self.dependencies_dir, dependency_state.path)
             logger.debug('Downloading dependency %s', dependency_state.dependency_key)
             try:
@@ -449,8 +455,9 @@ class DependencyManager(StateTransitioner, BaseDependencyManager):
                     # Start copying the fileobj to filesystem dependency path
                     self._store_dependency(dependency_path, fileobj, target_type)
 
-                logger.debug(
-                    'Finished downloading %s dependency %s to %s',
+                # TODO: change this back -tony
+                logger.info(
+                    'Tony - Finished downloading %s dependency %s to %s',
                     target_type,
                     dependency_state.dependency_key,
                     dependency_path,

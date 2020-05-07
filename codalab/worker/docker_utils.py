@@ -147,6 +147,14 @@ def start_bundle_container(
     volumes = get_bundle_container_volume_binds(bundle_path, docker_bundle_path, dependencies)
     environment = {'HOME': docker_bundle_path, 'CODALAB': 'true'}
     working_dir = docker_bundle_path
+
+    # TODO: delete later -tony
+    print(
+        'Tony - docker_utils: start_bundle_container()\ndocker_command: {}\ndocker_bundle_path:{}\nvolumes:{}\n'.format(
+            docker_command, docker_bundle_path, str(volumes)
+        )
+    )
+
     # Unset entrypoint regardless of image
     entrypoint = ''
     cpuset_str = ','.join(cpuset) if cpuset else ''
