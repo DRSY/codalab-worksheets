@@ -132,6 +132,12 @@ class DependencyManager(StateTransitioner, BaseDependencyManager):
         self._paths = self._paths.intersection(paths_in_loaded_state).intersection(
             local_directories
         )
+        # TODO: -tony
+        logger.info(
+            'Tony - dependency_manager._sync_state: local_directories: {}, self._paths{}, paths_in_loaded_state: {}'.format(
+                local_directories, self._paths, paths_in_loaded_state
+            )
+        )
 
         # Remove the orphaned dependencies from self._dependencies and
         # self._dependency_locks if they don't exist in self._paths (intersection of paths in dependency state,
@@ -373,6 +379,10 @@ class DependencyManager(StateTransitioner, BaseDependencyManager):
             path = os.path.join(dependency_key.parent_uuid, dependency_key.parent_path)
         else:
             path = dependency_key.parent_uuid
+        # TODO: investigate -tony
+        logger.info(
+            'Tony - In _assign_path - path: {} dependency_key: {}'.format(path, str(dependency_key))
+        )
         path = path.replace(os.path.sep, '_')
 
         # You could have a conflict between, for example a/b_c and
