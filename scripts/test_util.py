@@ -127,7 +127,7 @@ def run_command(
         output = traceback.format_exc()
         exitcode = 'test-cli exception'
         # TODO: delete later -tony
-        print('Tony Exception! - ' + str(output
+        print('Tony Exception! - ' + str(output))
 
     if expected_exit_code is not None and exitcode != expected_exit_code:
         colorize = Colorizer.red
