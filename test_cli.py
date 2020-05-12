@@ -140,7 +140,7 @@ def wait_for_contents(uuid, substring, timeout_seconds=100):
 
 
 def wait(uuid, expected_exit_code=0):
-    _run_command([cl, 'wait', uuid], expected_exit_code)
+    _run_command([cl, 'wait', uuid], expected_exit_code, include_stderr=True)
 
 
 def check_equals(true_value, pred_value):
@@ -556,8 +556,8 @@ def test(ctx):
     # Upload directory with only one file, should not simplify directory structure
     uuid = _run_command([cl, 'upload', test_path('dir2')])
     check_num_lines(
-        2 + 1, _run_command([cl, 'cat', uuid])
-    )  # Directory listing with 2 headers lines and one file
+        2 + 2, _run_command([cl, 'cat', uuid])
+    )  # Directory listing with 2 headers lines and two files
 
 
 @TestModule.register('upload2')
