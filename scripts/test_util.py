@@ -121,13 +121,9 @@ def run_command(
     except subprocess.CalledProcessError as e:
         output = e.output
         exitcode = e.returncode
-        # TODO: delete later -tony
-        print('Tony Exception! - ' + str(output))
     except Exception:
         output = traceback.format_exc()
         exitcode = 'test-cli exception'
-        # TODO: delete later -tony
-        print('Tony Exception! - ' + str(output))
 
     if expected_exit_code is not None and exitcode != expected_exit_code:
         colorize = Colorizer.red
@@ -135,7 +131,12 @@ def run_command(
     else:
         colorize = Colorizer.cyan
         extra = ''
-    print(colorize(" (exit code %s, expected %s%s)" % (exitcode, expected_exit_code, extra)))
+    print(
+        colorize(
+            " (exit code %s, expected %s%s)\nOutput:%s"
+            % (exitcode, expected_exit_code, extra, output)
+        )
+    )
     sys.stdout.flush()
     print(sanitize(output, max_output_chars))
     sys.stdout.flush()
