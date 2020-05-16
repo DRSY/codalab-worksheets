@@ -61,10 +61,6 @@ class DependencyManager(StateTransitioner, BaseDependencyManager):
         self._max_cache_size_bytes = max_cache_size_bytes
         self.dependencies_dir = os.path.join(worker_dir, DependencyManager.DEPENDENCIES_DIR_NAME)
 
-        # TODO: delete later -tony
-        logger.info(
-            'Tony - dependency_manager: init dependencies dir: {}'.format(self.dependencies_dir)
-        )
         if not os.path.exists(self.dependencies_dir):
             logger.info('{} doesn\'t exist, creating.'.format(self.dependencies_dir))
             os.makedirs(self.dependencies_dir, 0o770)
