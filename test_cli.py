@@ -1100,9 +1100,13 @@ def test(ctx):
     uuid = _run_command([cl, 'run', '.:%s' % dir1, 'cat f1'])
     check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
 
-    # We should respect the content of the subsequent dependency with the same name
+    # Test with multiple dependencies specified
     dir2 = _run_command([cl, 'upload', test_path('dir2')])
     uuid = _run_command([cl, 'run', ':%s' % dir1, '.:%s' % dir2, 'cat f1'])
+    check_equals('first file in dir2', _run_command([cl, 'cat', uuid + '/stdout']))
+
+    # Specify a path for the dependency key
+    uuid = _run_command([cl, 'run', ':%s' % dir1, 'foo/bar:%s' % dir2, 'cat foo/bar/f1'])
     check_equals('first file in dir2', _run_command([cl, 'cat', uuid + '/stdout']))
 
 
