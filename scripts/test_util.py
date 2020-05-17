@@ -133,8 +133,8 @@ def run_command(
         extra = ''
     print(
         colorize(
-            " (exit code %s, expected %s%s)\nOutput:%s"
-            % (exitcode, expected_exit_code, extra, output)
+            " (exit code %s, expected %s%s)"
+            % (exitcode, expected_exit_code, extra)
         )
     )
     sys.stdout.flush()

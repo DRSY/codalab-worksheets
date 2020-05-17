@@ -1097,16 +1097,12 @@ def test(ctx):
     # TODO: -tony
     # Test that content of dependency is mounted at top
     dir1 = _run_command([cl, 'upload', test_path('dir1')])
-    uuid = _run_command([cl, 'run', ':%s' % dir1, 'cat f1'])
-    check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
-
-    # Check that referencing a file from the dependency key still works
-    uuid = _run_command([cl, 'run', ':%s' % dir1, 'cat {}/f1'.format(dir1)])
+    uuid = _run_command([cl, 'run', '.:%s' % dir1, 'cat f1'])
     check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
 
     # We should respect the content of the subsequent dependency with the same name
     dir2 = _run_command([cl, 'upload', test_path('dir2')])
-    uuid = _run_command([cl, 'run', ':%s' % dir1, ':%s' % dir2, 'cat f1'])
+    uuid = _run_command([cl, 'run', ':%s' % dir1, '.:%s' % dir2, 'cat f1'])
     check_equals('first file in dir2', _run_command([cl, 'cat', uuid + '/stdout']))
 
 
