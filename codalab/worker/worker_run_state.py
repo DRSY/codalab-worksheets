@@ -2,6 +2,7 @@ import docker
 import errno
 import logging
 import os
+import shutil
 import threading
 import time
 import traceback
@@ -172,7 +173,7 @@ class RunStateMachine(StateTransitioner):
                 # Override the existing symlink if one already exists for the target
                 if e.errno == errno.EEXIST:
                     if os.path.isdir(link_name):
-                        os.rmdir(link_name)
+                        shutil.rmtree(link_name)
                     else:
                         os.remove(link_name)
                     os.symlink(target, link_name)

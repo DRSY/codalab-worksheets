@@ -1098,16 +1098,23 @@ def test(ctx):
     # Test that content of dependency is mounted at top
     dir1 = _run_command([cl, 'upload', test_path('dir1')])
     uuid = _run_command([cl, 'run', '.:%s' % dir1, 'cat f1'])
+    wait(uuid)
     check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
 
-    # Test with multiple dependencies specified
+    # Specify a path for the dependency key
     dir2 = _run_command([cl, 'upload', test_path('dir2')])
-    uuid = _run_command([cl, 'run', ':%s' % dir1, '.:%s' % dir2, 'cat f1'])
+    uuid = _run_command([cl, 'run', ':%s' % dir1, 'foo/bar:%s' % dir2, 'cat foo/bar/f1'])
+    wait(uuid)
     check_equals('first file in dir2', _run_command([cl, 'cat', uuid + '/stdout']))
 
-    # Specify a path for the dependency key
-    uuid = _run_command([cl, 'run', ':%s' % dir1, 'foo/bar:%s' % dir2, 'cat foo/bar/f1'])
+    # Test with multiple key paths with the same parent path
+    uuid = _run_command([cl, 'run', 'foo/bar:%s' % dir1, 'foo:%s' % dir2, 'cat foo/f1'])
+    wait(uuid)
     check_equals('first file in dir2', _run_command([cl, 'cat', uuid + '/stdout']))
+
+    uuid = _run_command([cl, 'run', 'foo:%s' % dir2, 'foo/bar:%s' % dir1, 'cat foo/bar/f1'])
+    wait(uuid)
+    check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
 
 
 @TestModule.register('read')
