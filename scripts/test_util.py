@@ -131,12 +131,7 @@ def run_command(
     else:
         colorize = Colorizer.cyan
         extra = ''
-    print(
-        colorize(
-            " (exit code %s, expected %s%s)"
-            % (exitcode, expected_exit_code, extra)
-        )
-    )
+    print(colorize(" (exit code %s, expected %s%s)" % (exitcode, expected_exit_code, extra)))
     sys.stdout.flush()
     print(sanitize(output, max_output_chars))
     sys.stdout.flush()
