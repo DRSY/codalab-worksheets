@@ -200,9 +200,9 @@ def get_bundle_container_volume_binds(bundle_path, docker_bundle_path, dependenc
     """
     Returns a volume bindings dict for the bundle path and dependencies given
     """
-    # TODO: change it back to'ro' - tony
+    # TODO: change it back to 'ro' - tony
     binds = {
-        os.path.abspath(dep_path): {'bind': docker_dep_path, 'mode': 'rw'}
+        os.path.abspath(dep_path): {'bind': docker_dep_path, 'mode': 'ro'}
         for dep_path, docker_dep_path in dependencies
     }
     binds[bundle_path] = {'bind': docker_bundle_path, 'mode': 'rw'}
