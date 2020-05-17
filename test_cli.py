@@ -1097,9 +1097,9 @@ def test(ctx):
     # TODO: -tony
     # Test that content of dependency is mounted at top
     dir1 = _run_command([cl, 'upload', test_path('dir1')])
-    uuid = _run_command([cl, 'run', '.:%s' % dir1, 'cat f1'])
-    wait(uuid)
-    check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
+    # uuid = _run_command([cl, 'run', '.:%s' % dir1, 'cat f1'])
+    # wait(uuid)
+    # check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
 
     # Specify a path for the dependency key
     dir2 = _run_command([cl, 'upload', test_path('dir2')])
