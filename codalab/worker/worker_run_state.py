@@ -296,41 +296,43 @@ class RunStateMachine(StateTransitioner):
                         run_state,
                     )
                 )
-                Path(full_child_path).mkdir(parents=True, exist_ok=True)
-                symlink(docker_dependency_path, full_child_path)
-
-            # These are turned into docker volume bindings like:
-            #   dependency_path:docker_dependency_path:ro
-            docker_dependencies.append((dependency_path, docker_dependency_path))
+                if dep.child_path != '.':
+                    Path(full_child_path).mkdir(parents=True, exist_ok=True)
+                    symlink(docker_dependency_path, full_child_path)
 
             # Process content for the current dependency path
-            for dependency_content_path in os.listdir(dependency_path):
-                dep_key = DependencyKey(
-                    dep.parent_uuid, os.path.join(dep.parent_path, dependency_content_path)
-                )
-                content_child_path = os.path.normpath(
-                    os.path.join(run_state.bundle_path, dependency_content_path)
-                )
-                dependency_path = os.path.join(
-                    self.dependency_manager.dependencies_dir,
-                    self.dependency_manager.get(run_state.bundle.uuid, dep_key).path,
-                )
-                docker_dependency_path = os.path.join(
-                    docker_dependencies_path, dep.child_path, dependency_content_path
-                )
-                # TODO: -tony
-                logger.info(
-                    '\nTony - worker_run_state, from PREPARING handling content path: {}\ndep_key: {}\ndependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}'.format(
-                        dependency_content_path,
-                        dep_key,
-                        dependency_path,
-                        content_child_path,
-                        docker_dependency_path,
+            if dep.child_path == '.':
+                for dependency_content_path in os.listdir(dependency_path):
+                    dep_key = DependencyKey(
+                        dep.parent_uuid, os.path.join(dep.parent_path, dependency_content_path)
                     )
-                )
-                # Set up symlinks for the content at dependency path
+                    content_child_path = os.path.normpath(
+                        os.path.join(run_state.bundle_path, dependency_content_path)
+                    )
+                    dependency_path = os.path.join(
+                        self.dependency_manager.dependencies_dir,
+                        self.dependency_manager.get(run_state.bundle.uuid, dep_key).path,
+                    )
+                    docker_dependency_path = os.path.join(
+                        docker_dependencies_path, dependency_content_path
+                    )
+                    # TODO: -tony
+                    logger.info(
+                        '\nTony - worker_run_state, from PREPARING handling content path: {}\ndep_key: {}\ndependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}'.format(
+                            dependency_content_path,
+                            dep_key,
+                            dependency_path,
+                            content_child_path,
+                            docker_dependency_path,
+                        )
+                    )
+                    # Set up symlinks for the content at dependency path
+                    docker_dependencies.append((dependency_path, docker_dependency_path))
+                    symlink(docker_dependency_path, content_child_path)
+            else:
+                # These are turned into docker volume bindings like:
+                #   dependency_path:docker_dependency_path:ro
                 docker_dependencies.append((dependency_path, docker_dependency_path))
-                symlink(docker_dependency_path, content_child_path)
 
         if run_state.resources.network:
             docker_network = self.docker_network_external.name
@@ -509,15 +511,14 @@ class RunStateMachine(StateTransitioner):
                     time.sleep(1)
 
         for dep in run_state.bundle.dependencies:
+            if dep.child_path == '.':
+                continue
+
             dep_key = DependencyKey(dep.parent_uuid, dep.parent_path)
             if not self.shared_file_system:  # No dependencies if shared fs worker
                 self.dependency_manager.release(run_state.bundle.uuid, dep_key)
 
-            if dep.child_path != '.':
-                child_path = os.path.join(run_state.bundle_path, dep.child_path)
-            else:
-                child_path = run_state.bundle_path
-
+            child_path = os.path.join(run_state.bundle_path, dep.child_path)
             try:
                 remove_path(child_path)
             except Exception:
