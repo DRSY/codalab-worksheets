@@ -1099,7 +1099,6 @@ def test(ctx):
 
     # Test that content of dependency is mounted at top when . is specified as the dependency key
     uuid = _run_command([cl, 'run', '.:%s' % dir1, 'cat f1'])
-    # TODO: fix this -tony
     # wait(uuid)
     # check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
 
@@ -1121,7 +1120,9 @@ def test(ctx):
     check_equals(output, _run_command([cl, 'cat', uuid + '/stdout']))
 
     # We currently don't support the case where a dependency key is an ancestor of another. Expect an error.
-    wait(_run_command([cl, 'run', 'foo:%s' % dir2, 'foo/bar:%s' % dir1, 'cat foo/bar/f1']), 1)
+    _run_command(
+        [cl, 'run', 'foo:%s' % dir2, 'foo/bar:%s' % dir1, 'cat foo/bar/f1'], expected_exit_code=1
+    )
 
 
 @TestModule.register('read')
