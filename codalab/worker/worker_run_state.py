@@ -303,33 +303,28 @@ class RunStateMachine(StateTransitioner):
 
             # Process content for the current dependency path
             if dep.child_path == '.':
-                for dependency_content_path in os.listdir(dependency_path):
-                    dep_key = DependencyKey(
-                        dep.parent_uuid, os.path.join(dep.parent_path, dependency_content_path)
-                    )
+                for content in os.listdir(dependency_path):
+                    dep_key = DependencyKey(dep.parent_uuid, os.path.join(dep.parent_path, content))
                     content_child_path = os.path.normpath(
-                        os.path.join(run_state.bundle_path, dependency_content_path)
+                        os.path.join(run_state.bundle_path, content)
                     )
-                    dependency_path = os.path.join(
-                        self.dependency_manager.dependencies_dir,
-                        self.dependency_manager.get(run_state.bundle.uuid, dep_key).path,
-                    )
+                    content_dependency_path = os.path.join(dependency_path, content)
                     docker_dependency_path = os.path.join(
-                        docker_dependencies_path, dependency_content_path
+                        docker_dependencies_path, content
                     )
                     # TODO: -tony
                     logger.info(
-                        '\nTony - worker_run_state, from PREPARING handling content path: {}\ndep_key: {}\ndependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}'.format(
-                            dependency_content_path,
+                        '\nTony - worker_run_state, from PREPARING handling content path: {}\ndep_key: {}\ncontent_dependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}'.format(
+                            content,
                             dep_key,
-                            dependency_path,
+                            content_dependency_path,
                             content_child_path,
                             docker_dependency_path,
                         )
                     )
                     # Set up symlinks for the content at dependency path
-                    docker_dependencies.append((dependency_path, docker_dependency_path))
                     symlink(docker_dependency_path, content_child_path)
+                    docker_dependencies.append((content_dependency_path, docker_dependency_path))
             else:
                 # These are turned into docker volume bindings like:
                 #   dependency_path:docker_dependency_path:ro

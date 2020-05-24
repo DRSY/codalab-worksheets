@@ -206,8 +206,6 @@ def get_bundle_container_volume_binds(bundle_path, docker_bundle_path, dependenc
         for dep_path, docker_dep_path in dependencies
     }
     binds[bundle_path] = {'bind': docker_bundle_path, 'mode': 'rw'}
-    # TODO: delete -tony
-    logger.info('\nTony - in get_bundle_container_volume_binds - binds: {}'.format(str(binds)))
     return binds
 
 

@@ -1095,21 +1095,30 @@ def test(ctx):
 @TestModule.register('run2')
 def test(ctx):
     dir1 = _run_command([cl, 'upload', test_path('dir1')])
-    dir2 = _run_command([cl, 'upload', test_path('dir2')])
+    dir3 = _run_command([cl, 'upload', test_path('dir3')])
 
-    # Test that content of dependency is mounted at top when . is specified as the dependency key
+    # Test that content of dependency is mounted at the top when . is specified as the dependency key
     uuid = _run_command([cl, 'run', '.:%s' % dir1, 'cat f1'])
-    # wait(uuid)
-    # check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
-
-    # Specify a path for the dependency key
-    uuid = _run_command([cl, 'run', 'foo/bar:%s' % dir1, 'foo/bar2:%s' % dir2, 'cat foo/bar/f1'])
     wait(uuid)
     check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
 
-    uuid = _run_command([cl, 'run', 'foo/bar:%s' % dir1, 'foo/bar2:%s' % dir2, 'cat foo/bar2/f1'])
+    uuid = _run_command([cl, 'run', '.:%s' % dir3, 'cat dir1/f1'])
     wait(uuid)
-    check_equals('first file in dir2', _run_command([cl, 'cat', uuid + '/stdout']))
+    check_equals('first nested file', _run_command([cl, 'cat', uuid + '/stdout']))
+
+    nested_dir = _run_command([cl, 'upload', test_path('dir3/dir1')])
+    uuid = _run_command([cl, 'run', '.:%s' % nested_dir, 'cat f1'])
+    wait(uuid)
+    check_equals('first nested file', _run_command([cl, 'cat', uuid + '/stdout']))
+
+    # Specify a path for the dependency key
+    uuid = _run_command([cl, 'run', 'foo/bar:%s' % dir1, 'foo/bar2:%s' % dir3, 'cat foo/bar/f1'])
+    wait(uuid)
+    check_equals('first file', _run_command([cl, 'cat', uuid + '/stdout']))
+
+    uuid = _run_command([cl, 'run', 'foo/bar:%s' % dir1, 'foo/bar2:%s' % dir3, 'cat foo/bar2/f1'])
+    wait(uuid)
+    check_equals('first file in dir3', _run_command([cl, 'cat', uuid + '/stdout']))
 
     # Test that backwards compatibility is maintained
     uuid = _run_command([cl, 'run', 'f1:%s/f1' % dir1, 'foo/bar:%s' % dir1, 'cat f1'])
@@ -1121,7 +1130,7 @@ def test(ctx):
 
     # We currently don't support the case where a dependency key is an ancestor of another. Expect an error.
     _run_command(
-        [cl, 'run', 'foo:%s' % dir2, 'foo/bar:%s' % dir1, 'cat foo/bar/f1'], expected_exit_code=1
+        [cl, 'run', 'foo:%s' % dir3, 'foo/bar:%s' % dir1, 'cat foo/bar/f1'], expected_exit_code=1
     )
 
 
