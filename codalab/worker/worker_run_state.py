@@ -309,9 +309,7 @@ class RunStateMachine(StateTransitioner):
                         os.path.join(run_state.bundle_path, content)
                     )
                     content_dependency_path = os.path.join(dependency_path, content)
-                    docker_dependency_path = os.path.join(
-                        docker_dependencies_path, content
-                    )
+                    docker_dependency_path = os.path.join(docker_dependencies_path, content)
                     # TODO: -tony
                     logger.info(
                         '\nTony - worker_run_state, from PREPARING handling content path: {}\ndep_key: {}\ncontent_dependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}'.format(

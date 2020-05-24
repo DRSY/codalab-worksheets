@@ -556,8 +556,8 @@ def test(ctx):
     # Upload directory with only one file, should not simplify directory structure
     uuid = _run_command([cl, 'upload', test_path('dir2')])
     check_num_lines(
-        2 + 2, _run_command([cl, 'cat', uuid])
-    )  # Directory listing with 2 headers lines and two files
+        2 + 1, _run_command([cl, 'cat', uuid])
+    )  # Directory listing with 2 headers lines and one file
 
 
 @TestModule.register('upload2')
