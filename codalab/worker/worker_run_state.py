@@ -301,8 +301,8 @@ class RunStateMachine(StateTransitioner):
                     Path(full_child_path).mkdir(parents=True, exist_ok=True)
                     symlink(docker_dependency_path, full_child_path)
 
-            # Process content for the current dependency path
             if dep.child_path == '.':
+                # Process content for the current dependency path
                 for content in os.listdir(dependency_path):
                     dep_key = DependencyKey(dep.parent_uuid, os.path.join(dep.parent_path, content))
                     content_child_path = os.path.normpath(
