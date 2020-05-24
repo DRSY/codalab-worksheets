@@ -299,7 +299,7 @@ class RunStateMachine(StateTransitioner):
                 )
                 if dep.child_path != '.':
                     Path(full_child_path).mkdir(parents=True, exist_ok=True)
-                    os.symlink(docker_dependency_path, full_child_path)
+                    symlink(docker_dependency_path, full_child_path)
 
             if dep.child_path == '.':
                 # Process content for the current dependency path
@@ -321,7 +321,7 @@ class RunStateMachine(StateTransitioner):
                         )
                     )
                     # Set up symlinks for the content at dependency path
-                    os.symlink(docker_dependency_path, content_child_path)
+                    symlink(docker_dependency_path, content_child_path)
                     docker_dependencies.append((content_dependency_path, docker_dependency_path))
             else:
                 # These are turned into docker volume bindings like:
