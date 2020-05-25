@@ -505,9 +505,6 @@ class RunStateMachine(StateTransitioner):
                     time.sleep(1)
 
         for dep in run_state.bundle.dependencies:
-            if dep.child_path == '.':
-                continue
-
             dep_key = DependencyKey(dep.parent_uuid, dep.parent_path)
             if not self.shared_file_system:  # No dependencies if shared fs worker
                 self.dependency_manager.release(run_state.bundle.uuid, dep_key)
