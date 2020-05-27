@@ -274,59 +274,65 @@ class RunStateMachine(StateTransitioner):
                 message = 'Invalid key for dependency: %s' % (dep.child_path)
                 logger.error(message)
                 return run_state._replace(stage=RunStage.CLEANING_UP, failure_message=message)
+
             docker_dependency_path = os.path.join(docker_dependencies_path, dep.child_path)
-            if self.shared_file_system:
-                # On a shared FS, we know where the dep is stored and can get the contents directly
-                dependency_path = os.path.realpath(os.path.join(dep.location, dep.parent_path))
-            else:
-                # On a dependency_manager setup ask the manager where the dependency is
-                dependency_path = os.path.join(
-                    self.dependency_manager.dependencies_dir,
-                    self.dependency_manager.get(run_state.bundle.uuid, dep_key).path,
+            dependency_path = self._get_dependency_path(run_state, dep)
+            # TODO: remove later -tony
+            logger.info(
+                '\nTony - worker_run_state, from PREPARING \ndep_key: {}\ndependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}\ndocker_dependencies_path: {}\ndep: {}\nrun_state: {}'.format(
+                    dep_key,
+                    dependency_path,
+                    full_child_path,
+                    docker_dependency_path,
+                    docker_dependencies_path,
+                    dep,
+                    run_state,
                 )
+            )
 
-                # TODO: -tony
-                logger.info(
-                    '\nTony - worker_run_state, from PREPARING \ndep_key: {}\ndependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}\ndocker_dependencies_path: {}\ndep: {}\nrun_state: {}'.format(
-                        dep_key,
-                        dependency_path,
-                        full_child_path,
+            def mount_dependency(docker_path, child_path, parent_path, shared_file_system):
+                if not shared_file_system:
+                    # Set up symlinks for the content at dependency path
+                    Path(child_path).parent.mkdir(parents=True, exist_ok=True)
+                    os.symlink(docker_path, child_path)
+                # The following will be converted into a Docker volume binding like:
+                #   dependency_path:docker_dependency_path:ro
+                docker_dependencies.append((parent_path, docker_path))
+
+            if dep.child_path != '.':
+                try:
+                    mount_dependency(
                         docker_dependency_path,
-                        docker_dependencies_path,
-                        dep,
-                        run_state,
+                        full_child_path,
+                        dependency_path,
+                        self.shared_file_system,
                     )
-                )
-                if dep.child_path != '.':
-                    Path(full_child_path).mkdir(parents=True, exist_ok=True)
-                    symlink(docker_dependency_path, full_child_path)
-
-            if dep.child_path == '.':
+                except OSError as e:
+                    return run_state._replace(stage=RunStage.CLEANING_UP, failure_message=str(e))
+            else:
                 # Process content for the current dependency path
-                for content in os.listdir(dependency_path):
-                    dep_key = DependencyKey(dep.parent_uuid, os.path.join(dep.parent_path, content))
-                    content_child_path = os.path.normpath(
-                        os.path.join(run_state.bundle_path, content)
-                    )
-                    content_dependency_path = os.path.join(dependency_path, content)
-                    docker_dependency_path = os.path.join(docker_dependencies_path, content)
+                for child in os.listdir(dependency_path):
+                    full_child_path = os.path.normpath(os.path.join(run_state.bundle_path, child))
+                    parent_dependency_path = os.path.join(dependency_path, child)
+                    docker_dependency_path = os.path.join(docker_dependencies_path, child)
                     # TODO: -tony
                     logger.info(
-                        '\nTony - worker_run_state, from PREPARING handling content path: {}\ndep_key: {}\ncontent_dependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}'.format(
-                            content,
-                            dep_key,
-                            content_dependency_path,
-                            content_child_path,
-                            docker_dependency_path,
+                        '\nTony - worker_run_state, from PREPARING handling child: {}\nparent_dependency_path: {}\nfull_child_path: {}\ndocker_dependency_path: {}'.format(
+                            child, parent_dependency_path, full_child_path, docker_dependency_path
                         )
                     )
-                    # Set up symlinks for the content at dependency path
-                    symlink(docker_dependency_path, content_child_path)
-                    docker_dependencies.append((content_dependency_path, docker_dependency_path))
-            else:
-                # These are turned into docker volume bindings like:
-                #   dependency_path:docker_dependency_path:ro
-                docker_dependencies.append((dependency_path, docker_dependency_path))
+
+                    try:
+                        mount_dependency(
+                            docker_dependency_path,
+                            full_child_path,
+                            parent_dependency_path,
+                            self.shared_file_system,
+                        )
+                    except OSError as e:
+                        return run_state._replace(
+                            stage=RunStage.CLEANING_UP, failure_message=str(e)
+                        )
 
         if run_state.resources.network:
             docker_network = self.docker_network_external.name
@@ -486,6 +492,13 @@ class RunStateMachine(StateTransitioner):
             move to UPLOADING_RESULTS state
            Otherwise move to FINALIZING state
         """
+
+        def remove_path_helper(path):
+            try:
+                remove_path(path)
+            except Exception:
+                logger.error(traceback.format_exc())
+
         if run_state.container_id is not None:
             while docker_utils.container_exists(run_state.container):
                 try:
@@ -505,15 +518,20 @@ class RunStateMachine(StateTransitioner):
                     time.sleep(1)
 
         for dep in run_state.bundle.dependencies:
-            dep_key = DependencyKey(dep.parent_uuid, dep.parent_path)
             if not self.shared_file_system:  # No dependencies if shared fs worker
+                dep_key = DependencyKey(dep.parent_uuid, dep.parent_path)
                 self.dependency_manager.release(run_state.bundle.uuid, dep_key)
 
-            child_path = os.path.join(run_state.bundle_path, dep.child_path)
-            try:
-                remove_path(child_path)
-            except Exception:
-                logger.error(traceback.format_exc())
+            if dep.child_path == '.':
+                # When child_path is '.', all the children of the dependency path that need to be cleaned up
+                # are mounted at the top-level of the bundle
+                for child in os.listdir(self._get_dependency_path(run_state, dep)):
+                    remove_path_helper(os.path.join(run_state.bundle_path, child))
+            else:
+                # child_path can be a nested path, so just remove everything from the first element of the path
+                remove_path_helper(
+                    os.path.join(run_state.bundle_path, Path(dep.child_path).parts[0])
+                )
 
         if not self.shared_file_system and run_state.has_contents:
             # No need to upload results since results are directly written to bundle store
@@ -607,3 +625,15 @@ class RunStateMachine(StateTransitioner):
             return run_state._replace(stage=RunStage.FINISHED, run_status='Finished')
         else:
             return run_state
+
+    def _get_dependency_path(self, run_state, dependency):
+        if self.shared_file_system:
+            # On a shared FS, we know where the dep is stored and can get the contents directly
+            return os.path.realpath(os.path.join(dependency.location, dependency.parent_path))
+        else:
+            # On a dependency_manager setup ask the manager where the dependency is
+            dep_key = DependencyKey(dependency.parent_uuid, dependency.parent_path)
+            return os.path.join(
+                self.dependency_manager.dependencies_dir,
+                self.dependency_manager.get(run_state.bundle.uuid, dep_key).path,
+            )
